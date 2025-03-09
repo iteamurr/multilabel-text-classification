@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 from multilabel_text_classification.config import PROCESSED_DATA_DIR, RAW_DATA_DIR
 
+
 app = typer.Typer()
 
 

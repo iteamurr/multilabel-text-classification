@@ -4,7 +4,9 @@
     <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
 </a>
 
-A short description of the project.
+Аллаяров Тимур Рустамович. БИВТ-21-17.
+
+Проект по Advanced NLP 2024–2025.
 
 ## Project Organization
 
@@ -46,16 +48,62 @@ A short description of the project.
     ├── config.py               <- Store useful variables and configuration
     │
     ├── dataset.py              <- Scripts to download or generate data
+    │   
+    ├── preprocessing.py        <- Scripts to preprocess data
     │
     ├── features.py             <- Code to create features for modeling
     │
-    ├── modeling                
+    ├── entities                
+    │   │
     │   ├── __init__.py 
-    │   ├── predict.py          <- Code to run model inference with trained models          
-    │   └── train.py            <- Code to train models
+    │   │
+    │   └── params.py            <- Сode to process parameters
+    ├── modeling                
+    │   │
+    │   ├── __init__.py 
+    │   │
+    │   ├── train_multi_cls.py  <- Code to train a multi-label classifier using multiple [CLS] tokens
+    │   │
+    │   ├── train_single_cls.py <- Code to train a multi-label classifier using a single [CLS] token
+    │   │
+    │   └── train.py            <- Scripts to help train models
     │
     └── plots.py                <- Code to create visualizations
 ```
 
 --------
 
+# Отчет
+
+## Решаемая задача
+
+Попробовать разные подходы к архитектуре трансформер-энкодера для задачи многоклассовой классификации, взяв за основу предобученную модель [XLM-RoBERTa](https://huggingface.co/FacebookAI/xlm-roberta-base).
+
+Реализованы и сравнены два варианта классификатора:
+
+1. Классический подход – использует стандартный [CLS]-токен, который проходит через несколько полносвязных слоев для предсказания меток.
+2. Подход с несколькими [CLS]-токенами – добавляет отдельные [CLS]-токены для каждого класса, обрабатывает их энкодером и применяет к ним общий классификатор.
+
+Обе архитектуры обучены на размеченном датасете, рассчитаны метрики качества, проведено сравнение их эффективности.
+
+Данные, используемые для обучения: [Toxic Comment Classification Challenge](https://www.kaggle.com/competitions/jigsaw-toxic-comment-classification-challenge)
+
+## Результаты
+
+### Один \[CLS\]-токен
+
+![alt text](reports/images/image-3.png)
+![alt text](reports/images/image-4.png)
+![alt text](reports/images/image-5.png)
+
+### Несколько \[CLS\]-токенов
+
+![alt text](reports/images/image.png)
+![alt text](reports/images/image-1.png)
+![alt text](reports/images/image-2.png)
+
+## Выводы
+
+Вторая модель показала немного лучшие результаты на обучающей выборке, но уступила на валидационной, что указывает на переобучение. Значение f1-micro у второй модели выше, но разница незначительная и может находиться в пределах погрешности.
+
+Первая модель, хотя и показывает в среднем чуть худшие результаты, выглядит более устойчивой, так как не склонна к переобучению, в отличие от второй. Поэтому при выборе модели для решения текущей задачи я бы предпочел первую. Однако возможен и другой путь — дальнейший подбор параметров для второй модели с целью улучшения ее устойчивости.

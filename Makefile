@@ -31,7 +31,7 @@ lint:
 ## Format source code with black
 .PHONY: format
 format:
-	isort src
+	isort multilabel_text_classification
 	black --config pyproject.toml multilabel_text_classification
 
 ## Set up python interpreter environment
@@ -44,11 +44,10 @@ create_environment:
 # PROJECT RULES                                                                 #
 #################################################################################
 
-
-## Make Dataset
-.PHONY: data
-data: requirements
-	$(PYTHON_INTERPRETER) multilabel_text_classification/dataset.py
+## Begin preprocessing
+.PHONY: prep
+prep:
+	$(PYTHON_INTERPRETER) multilabel_text_classification/preprocessing.py params.yaml
 
 #################################################################################
 # Self Documenting Commands                                                     #

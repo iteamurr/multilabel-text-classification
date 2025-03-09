@@ -1,0 +1,24 @@
+paths:
+  data_path: "data"
+  raw_data_path: "data/raw"
+  processed_data_path: "data/processed"
+  single_cls_model_path: "models/single_cls"
+  multi_cls_model_path: "models/multi_cls"
+  metrics_path: "reports/metrics"
+
+train_params:
+  pretrained_model: "xlm-roberta-base"
+  batch_size: 16
+  train_split: 0.8
+  learning_rate: 0.00001
+  num_epochs: 3
+  max_seq_length: 128
+
+data_params:
+  train_file: "train.csv"
+  test_file: "test.csv"
+  val_file: "val.csv"
+  single_cls_metrics_file: "metrics_history_cls.csv"
+  multi_cls_metrics_file: "metrics_history_cls_x.csv"
+
+random_state: 42

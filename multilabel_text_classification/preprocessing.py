@@ -12,11 +12,6 @@ import entities.params
 app = typer.Typer()
 
 
-def preprocess_text(text: str, remove_digits=True) -> str:
-    pattern = r"[^a-zA-Z\s]" if remove_digits else r"[^a-zA-Z0-9\s]"
-    return re.sub(r"\s+", " ", re.sub(pattern, "", text).lower()).strip()
-
-
 @app.command()
 def main(config_path: str):
     config = entities.params.read_pipeline_params(config_path)
@@ -26,10 +21,8 @@ def main(config_path: str):
     logger.debug(f"Dataset shape: {df.shape}")
     logger.success("Dataset loaded successfully.")
 
-    df.dropna(inplace=True)
-
     logger.info("Transforming dataset...")
-    df["comment_text"] = df["comment_text"].apply(preprocess_text)
+    df.dropna(inplace=True)
 
     train_data, val_data = train_test_split(
         df,

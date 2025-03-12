@@ -21,7 +21,7 @@ def set_seed(seed):
     torch.backends.cudnn.benchmark = False
 
 
-def compute_metrics(labels, preds):
+def compute_metrics(labels, preds, probas):
     metrics = {
         "precision_micro": sklearn.metrics.precision_score(
             labels, preds, average="micro", zero_division=0
@@ -40,7 +40,7 @@ def compute_metrics(labels, preds):
     }
     metrics.update(
         {
-            f"roc_auc_class_{i}": sklearn.metrics.roc_auc_score(labels[:, i], preds[:, i])
+            f"roc_auc_class_{i}": sklearn.metrics.roc_auc_score(labels[:, i], probas[:, i])
             for i in range(labels.shape[1])
         }
     )
@@ -49,6 +49,7 @@ def compute_metrics(labels, preds):
 
 def train_epoch(model, dataloader, optimizer, scheduler, device, loss_metric, writer):
     model.train()
+    all_probas = []
     all_preds = []
     all_labels = []
 
@@ -66,7 +67,10 @@ def train_epoch(model, dataloader, optimizer, scheduler, device, loss_metric, wr
 
         loss_metric.update(loss.item())
 
-        preds = (torch.sigmoid(outputs).cpu().detach().numpy() > 0.5).astype(int)
+        probas = torch.sigmoid(outputs).cpu().detach().numpy()
+        preds = (probas > 0.5).astype(int)
+
+        all_probas.extend(probas)
         all_preds.extend(preds)
         all_labels.extend(labels.cpu().numpy())
 
@@ -74,12 +78,13 @@ def train_epoch(model, dataloader, optimizer, scheduler, device, loss_metric, wr
             writer.add_scalar("Loss/Train", loss.item(), step)
 
     avg_loss = loss_metric.compute().item()
-    metrics = compute_metrics(np.array(all_labels), np.array(all_preds))
+    metrics = compute_metrics(np.array(all_labels), np.array(all_preds), np.array(all_probas))
     return avg_loss, metrics
 
 
 def evaluate(model, dataloader, device):
     model.eval()
+    all_probas = []
     all_preds = []
     all_labels = []
     losses = []
@@ -94,12 +99,15 @@ def evaluate(model, dataloader, device):
             loss = nn.BCEWithLogitsLoss()(outputs, labels)
             losses.append(loss.item())
 
-            preds = (torch.sigmoid(outputs).cpu().detach().numpy() > 0.5).astype(int)
+            probas = torch.sigmoid(outputs).cpu().detach().numpy()
+            preds = (probas > 0.5).astype(int)
+            
+            all_probas.extend(probas)
             all_preds.extend(preds)
             all_labels.extend(labels.cpu().numpy())
 
     avg_loss = np.mean(losses)
-    metrics = compute_metrics(np.array(all_labels), np.array(all_preds))
+    metrics = compute_metrics(np.array(all_labels), np.array(all_preds), np.array(all_probas))
     return avg_loss, metrics
 
 

@@ -37,3 +37,12 @@ class TrainParams:
             "required": True,
         },
     )
+    warmup_ratio: float = field(
+        default=0.1,
+        metadata={
+            "validate": marshmallow.validate.Range(
+                min=0.0,
+                max=1.0,
+            )
+        },
+    )

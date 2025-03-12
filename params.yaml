@@ -13,6 +13,7 @@ train_params:
   learning_rate: 0.00001
   num_epochs: 3
   max_seq_length: 128
+  warmup_ratio: 0.1
 
 data_params:
   train_file: "train.csv"

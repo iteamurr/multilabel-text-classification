@@ -2,9 +2,10 @@ import torch
 import transformers
 import typer
 from loguru import logger
-from torch import nn
-from torch.utils.data import DataLoader, Dataset
-from torch.utils.tensorboard import SummaryWriter
+import torch.nn
+import torch.optim
+import torch.utils.data
+import torch.utils.tensorboard
 
 import entities.params
 import modeling.train
@@ -12,10 +13,10 @@ import modeling.train
 
 app = typer.Typer()
 
-writer = SummaryWriter(log_dir="runs")
+writer = torch.utils.tensorboard.SummaryWriter(log_dir="runs")
 
 
-class CustomDataset(Dataset):
+class CustomDataset(torch.utils.data.Dataset):
     def __init__(self, texts, labels, tokenizer, max_length=128):
         self.texts = texts
         self.labels = labels
@@ -42,14 +43,14 @@ class CustomDataset(Dataset):
         }
 
 
-class SingleCLSClassifier(nn.Module):
+class SingleCLSClassifier(torch.nn.Module):
     def __init__(self, base_model, num_classes):
         super(SingleCLSClassifier, self).__init__()
         self.base_model = base_model
-        self.classifier = nn.Sequential(
-            nn.Linear(base_model.config.hidden_size, base_model.config.hidden_size),
-            nn.Tanh(),
-            nn.Linear(base_model.config.hidden_size, num_classes),
+        self.classifier = torch.nn.Sequential(
+            torch.nn.Linear(base_model.config.hidden_size, base_model.config.hidden_size),
+            torch.nn.Tanh(),
+            torch.nn.Linear(base_model.config.hidden_size, num_classes),
         )
 
     def forward(self, input_ids, attention_mask):
@@ -68,7 +69,12 @@ def create_dataloader(texts, labels, tokenizer, config: entities.params.Pipeline
         tokenizer,
         max_length=config.train_params.max_seq_length,
     )
-    return DataLoader(dataset, batch_size=config.train_params.batch_size, shuffle=shuffle)
+    return torch.utils.data.DataLoader(
+        dataset,
+        batch_size=config.train_params.batch_size,
+        shuffle=shuffle,
+        pin_memory=True,
+    )
 
 
 @app.command()
@@ -94,12 +100,14 @@ def main(config_path: str) -> None:
     model = SingleCLSClassifier(base_model, train_labels.shape[1])
 
     logger.info("Setting up optimizer and scheduler...")
-    optimizer = transformers.AdamW(model.parameters(), lr=config.train_params.learning_rate)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=config.train_params.learning_rate)
     total_steps = (
         len(train_texts) // config.train_params.batch_size
     ) * config.train_params.num_epochs
     scheduler = transformers.get_linear_schedule_with_warmup(
-        optimizer, int(0.1 * total_steps), total_steps
+        optimizer,
+        int(config.train_params.warmup_ratio * total_steps),
+        total_steps,
     )
 
     train_dataloader = create_dataloader(train_texts, train_labels, tokenizer, config, True)
